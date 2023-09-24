@@ -41,7 +41,7 @@ export default class AutoFilename extends Plugin {
 			1000 + Math.random() * 9000
 		)}-${Date.now()}).md`;
 		if (fileName[0] == ".") fileName = "~ " + fileName;
-		const newPath: string = `${this.settings.targetFolder}\\${fileName}`;
+		const newPath: string = `${this.settings.targetFolder}/${fileName}`;
 		await this.app.fileManager.renameFile(file, newPath);
 	}
 
