@@ -1,16 +1,16 @@
 # Auto Filename
 
-Simplify your file naming workflow 📁
+📁 Simplify your file naming workflow
 
-Obsidian Auto Filename is a plugin that automatically renames files in Obsidian based on the first x characters of the file. This can save you a lot of time and effort, especially if you create a lot of new notes or files on a regular basis. 🙌
+🙌 Obsidian Auto Filename is a plugin that automatically renames files in Obsidian based on the first x characters of the file. This can save you a lot of time and effort, especially if you create a lot of new notes or files on a regular basis.
 
-The plugin is easy to use. Simply install it from the Obsidian community plugins and configure the settings to your liking. You can choose the target folder where you want the plugin to rename files, the number of characters to use for the filename, and whether or not to hide the inline title for files in the target folder. 🔧
+🔧 The plugin is easy to use. Simply install it from the Obsidian community plugins and configure the settings to your liking. You can choose the target folder where you want the plugin to rename files, the number of characters to use for the filename, and whether or not to hide the inline title for files in the target folder.
 
-Once you have configured the plugin, it will automatically rename any new files that you create in the target folder. You can also rename all of the files in the target folder at once by clicking the "Rename All files" button in the plugin settings. 🚀
+🚀 Once you have configured the plugin, it will automatically rename any new files that you create in the target folder. You can also rename all of the files in the target folder at once by clicking the "Rename All files" button in the plugin settings.
 
-Obsidian Auto Filename is a great plugin for anyone who wants to simplify their file naming workflow. It is especially useful for people who use Obsidian to create a lot of new notes or files on a regular basis. 📝
+📝 Obsidian Auto Filename is a great plugin for anyone who wants to simplify their file naming workflow. It is especially useful for people who use Obsidian to create a lot of new notes or files on a regular basis.
 
-Try Obsidian Auto Filename today and save yourself time and effort! 😊
+😊 Try Obsidian Auto Filename today and save yourself time and effort!
 
 ## How to use
 
