@@ -1,13 +1,13 @@
 const fs = require("fs");
 
-fs.copyFile("main.js", "./obsidian-auto-filename/main.js", (err) => {
+fs.copyFile("main.js", "./release/main.js", (err) => {
 	if (err) throw err;
 	console.log("main.js updated successfully!");
 });
 
 fs.copyFile(
 	"manifest.json",
-	"./obsidian-auto-filename/manifest.json",
+	"./release/manifest.json",
 	(err) => {
 		if (err) throw err;
 		console.log("manifest.json updated successfully!");
