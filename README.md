@@ -12,7 +12,7 @@
 
 😊 Try Obsidian Auto Filename today and save yourself time and effort!
 
-# How to use
+## How to use
 
 1. Install from obsidian community plugins.
 2. Setup settings
@@ -38,11 +38,11 @@
         - Renames all files on the target folder.
         - Warning: To be safe, make sure you backup before proceeding.
 
-# Manual install
+## Manual install
 1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/rcsaquino/obsidian-auto-filename/releases/).
 2. Copy or move `main.js` and `manifest.js` to `your_vault_name/.obsidian/plugins/obsidian-auto-filename`.
 
-# Support my work
+## Support my work
 
 If you like Auto Filename, then please support my work and enthusiasm by buying me a coffee on [https://ko-fi.com/rcsaquino](https://ko-fi.com/rcsaquino)😊.
 
