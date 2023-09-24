@@ -45,4 +45,5 @@ Try Obsidian Auto Filename today and save yourself time and effort!
 ### Support my work
 
 If you like my work, then please support my work and enthusiasm by buying me a coffee on [https://ko-fi/rcsaquino](https://ko-fi/rcsaquino)😊.
-<a href='https://ko-fi.com/S6S0PI3VV' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
+<a href='https://ko-fi.com/rcsaquino' target='_blank'><img height='72' style='border:0px;height:72px;' src='https://storage.ko-fi.com/cdn/kofi2.png?v=3' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
