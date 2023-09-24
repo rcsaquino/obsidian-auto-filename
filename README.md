@@ -40,7 +40,7 @@
 
 ## Manual install
 1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/rcsaquino/obsidian-auto-filename/releases/).
-2. Copy or move `main.js` and `manifest.js` to `./your_vault_name/.obsidian/plugins/obsidian-auto-filename`.
+2. Copy or move `main.js` and `manifest.js` to `your_vault_name/.obsidian/plugins/obsidian-auto-filename`.
 
 ## Support my work
 
