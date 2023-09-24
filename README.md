@@ -1,4 +1,4 @@
-## Auto Filename
+# Auto Filename
 
 Simplify your file naming workflow
 
@@ -12,7 +12,7 @@ Obsidian Auto Filename is a great plugin for anyone who wants to simplify their 
 
 Try Obsidian Auto Filename today and save yourself time and effort!
 
-### How to use
+## How to use
 
 1. Install from obsidian community plugins.
 2. Setup settings
@@ -38,11 +38,11 @@ Try Obsidian Auto Filename today and save yourself time and effort!
         - Renames all files on the target folder.
         - Warning: To be safe, make sure you backup before proceeding.
 
-### Manual install
+## Manual install
 1. Download the [latest release](https://github.com/rcsaquino/obsidian-auto-filename/releases/).
 2. Extract to folder `./my_vault_name/.obsidian/plugins`.
 
-### Support my work
+## Support my work
 
 If you like my work, then please support my work and enthusiasm by buying me a coffee on [https://ko-fi/rcsaquino](https://ko-fi/rcsaquino)😊.
 
