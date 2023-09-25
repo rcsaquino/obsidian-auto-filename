@@ -12,35 +12,44 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	isTitleHidden: false,
 };
 
-let hideInlineTitle = document.createElement("style");
+// Used for "Hide inline title for target folder" setting
+const hideInlineTitle = document.createElement("style");
 hideInlineTitle.innerText = ".inline-title {display: none}";
 
 export default class AutoFilename extends Plugin {
 	settings: PluginSettings;
 
+	// Function for renaming files
 	async renameFile(file: TFile): Promise<void> {
-		if (this.settings.targetFolder == "") return;
-		if (file?.parent?.path != this.settings.targetFolder) return;
+		if (this.settings.targetFolder == "") return; // Return if user has no target folder selected
+		if (file?.parent?.path != this.settings.targetFolder) return; // Return if file is not in user's target folder
 
 		const content = await this.app.vault.read(file);
 		const allowedChars: string =
-			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !#$%&'()+,-.;=@[]^_`{}~";
+			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !#$%&'()+,-.;=@[]^_`{}~"; // Characters that are safe to  use in a filename
 		const chars: string[] = content.split("");
+
 		let fileName: string = "";
+		// Takes the first n characters of the file and uses it as part of the filename.
 		for (let i: number = 0; i < content.length; i++) {
+			// Adds "..." after the last character if file characters > n
 			if (i >= Number(this.settings.charCount)) {
 				fileName += "...";
 				break;
 			}
-			if (chars[i] == "\n") chars[i] = " ";
+
+			if (chars[i] == "\n") chars[i] = " "; // Treat new lines as spaces.
 			if (allowedChars.contains(chars[i])) {
 				fileName += chars[i];
 			}
 		}
+		// Adds a random 4 digit number and the current date in ms at the end.
+		// This allows multiple files with the same first n characters to be created without issues.
 		fileName = `${fileName.trim()} (${Math.floor(
 			1000 + Math.random() * 9000
 		)}-${Date.now()}).md`;
-		if (fileName[0] == ".") fileName = "~ " + fileName;
+
+		if (fileName[0] == ".") fileName = "~ " + fileName; // Can't use "." at the beginning of a filename. Replace with "~ " if present.
 		const newPath: string = `${this.settings.targetFolder}/${fileName}`;
 		await this.app.fileManager.renameFile(file, newPath);
 	}
@@ -60,10 +69,42 @@ export default class AutoFilename extends Plugin {
 	async onload(): Promise<void> {
 		await this.loadSettings();
 		this.addSettingTab(new AutoFilenameSettings(this.app, this));
-		this.app.vault.on("modify", (abstractFile) => {
+
+		// Triggers when vault is  modified such as when editing files.
+		// This is what triggers to rename the file
+		this.registerEvent(
+			this.app.vault.on("modify", (abstractFile) => {
+				if (abstractFile instanceof TFile)
+					this.renameFile(abstractFile);
+			})
+		);
+
+		// Triggers when a file is opened.
+		// Used for "Hide inline title for target folder" setting.
+		this.registerEvent(
+			this.app.workspace.on("file-open", (file) => {
+				if (!document.body.classList.contains("show-inline-title"))
+					return;
+				let shouldHide =
+					this.settings.isTitleHidden &&
+					file?.parent?.path == this.settings.targetFolder;
+				const head = document.head;
+				if (shouldHide && !head.contains(hideInlineTitle)) {
+					head.appendChild(hideInlineTitle);
+				}
+				if (!shouldHide && head.contains(hideInlineTitle)) {
+					head.removeChild(hideInlineTitle);
+				}
+			})
+		);
+	}
+
+	// Safely remove registered events
+	async onunload(): Promise<void> {
+		this.app.vault.off("modify", (abstractFile) => {
 			if (abstractFile instanceof TFile) this.renameFile(abstractFile);
 		});
-		this.app.workspace.on("file-open", (file) => {
+		this.app.workspace.off("file-open", (file) => {
 			if (!document.body.classList.contains("show-inline-title")) return;
 			let shouldHide =
 				this.settings.isTitleHidden &&
@@ -77,12 +118,6 @@ export default class AutoFilename extends Plugin {
 			}
 		});
 	}
-
-	async onunload(): Promise<void> {
-		this.app.vault.off("modify", (abstractFile) => {
-			if (abstractFile instanceof TFile) this.renameFile(abstractFile);
-		});
-	}
 }
 
 class AutoFilenameSettings extends PluginSettingTab {
@@ -91,6 +126,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 	display(): void {
 		this.containerEl.empty();
 
+		// Setting 1
 		new Setting(this.containerEl)
 			.setName("Target folder")
 			.setDesc(
@@ -105,6 +141,8 @@ class AutoFilenameSettings extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					})
 			);
+
+		// Setting 2
 		new Setting(this.containerEl)
 			.setName("Character count")
 			.setDesc(
@@ -122,13 +160,12 @@ class AutoFilenameSettings extends PluginSettingTab {
 					})
 			);
 
-		let shouldDisable: boolean =
+		// Setting 3
+		const shouldDisable: boolean =
 			!document.body.classList.contains("show-inline-title");
-
-		let description: string = shouldDisable
+		const description: string = shouldDisable
 			? 'Enable "Appearance > Advanced > Show inline title" in options to use this setting.'
 			: 'Overrides "Appearance > Advanced > Show inline title" for files on the target folder.';
-
 		new Setting(this.containerEl)
 			.setName("Hide inline title for target folder")
 			.setDesc(description)
@@ -140,6 +177,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			})
+			//  Disable this setting if the obsidian setting "Show inline title" is disabled
 			.setDisabled(shouldDisable)
 			.then(async (setting) => {
 				if (shouldDisable) {
@@ -161,6 +199,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 				}
 			});
 
+		// Setting 4
 		new Setting(this.containerEl)
 			.setName("Rename all files")
 			.setDesc(
@@ -168,7 +207,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 			)
 			.addButton((button) =>
 				button.setButtonText("Rename").onClick((_) => {
-					let files = this.app.vault.getFiles();
+					let files = this.app.vault.getMarkdownFiles();
 					files.forEach((file) => {
 						this.plugin.renameFile(file);
 					});
