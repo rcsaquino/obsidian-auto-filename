@@ -49,7 +49,7 @@ export default class AutoFilename extends Plugin {
 			1000 + Math.random() * 9000
 		)}-${Date.now()}).md`;
 
-		if (fileName[0] == ".") fileName = "~ " + fileName; // Can't use "." at the beginning of a filename. Replace with "~ " if present.
+		if (fileName[0] == ".") fileName = "~ " + fileName; // Add "~ " at the beginning if "." is the first character in a file to avoid naming issues.
 		const newPath: string = `${this.settings.targetFolder}/${fileName}`;
 		await this.app.fileManager.renameFile(file, newPath);
 	}
