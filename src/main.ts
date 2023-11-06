@@ -14,8 +14,11 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	checkInterval: 500,
 };
 
+// Global variable for "Rename all files" setting
+let renamedFileCount: number = 0;
+
 // Variables for debounce
-let onTimeout = true;
+let onTimeout: boolean = true;
 let timeout: NodeJS.Timeout;
 let previousFile: string;
 
@@ -69,17 +72,17 @@ export default class AutoFilename extends Plugin {
 		if (fileName[0] == ".") fileName = "~ " + fileName; // Add "~ " at the beginning if "." is the first character in a file to avoid naming issues.
 
 		// No need to rename if new filename == old filename
-		if (fileName == this.app.workspace.getActiveFile()?.name.slice(0, -24))
-			return;
+		if (fileName == file.name.slice(0, -24)) return;
 
-		// Adds a random 4 digit number and the current date in ms at the end.
+		// Adds 7 random alphanumeric characters at the end.
 		// This allows multiple files with the same first n characters to be created without issues.
-		fileName = `${fileName.trim()} (${Math.floor(
-			1000 + Math.random() * 9000
-		)}-${Date.now()}).md`;
+		fileName = `${fileName.trim()} (${Math.random()
+			.toString(36)
+			.slice(-7)}).md`;
 
 		const newPath: string = `${this.settings.targetFolder}/${fileName}`;
 		await this.app.fileManager.renameFile(file, newPath);
+		renamedFileCount++;
 	}
 
 	async saveSettings(): Promise<void> {
@@ -244,13 +247,17 @@ class AutoFilenameSettings extends PluginSettingTab {
 				"Forcibly renames all files on the target folder. Warning: To be safe, make sure you backup before proceeding."
 			)
 			.addButton((button) =>
-				button.setButtonText("Rename").onClick((_) => {
+				button.setButtonText("Rename").onClick(async () => {
 					let files = this.app.vault.getMarkdownFiles();
-					files.forEach((file) => {
-						this.plugin.renameFile(file, true);
-					});
 					new Notice(
-						`Renamed all files in ${this.plugin.settings.targetFolder}`
+						`Renaming ${files.length} files in ${this.plugin.settings.targetFolder}...`
+					);
+					renamedFileCount = 0;
+					await Promise.all(
+						files.map((file) => this.plugin.renameFile(file, true))
+					);
+					new Notice(
+						`Successfully renamed ${renamedFileCount}/${files.length} files.`
 					);
 				})
 			);
