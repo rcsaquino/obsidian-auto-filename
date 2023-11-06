@@ -48,7 +48,7 @@ export default class AutoFilename extends Plugin {
 			onTimeout = true;
 		}
 
-		const content = await this.app.vault.read(file);
+		const content = await this.app.vault.cachedRead(file);
 		const allowedChars: string =
 			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !#$%&'()+,-.;=@[]^_`{}~"; // Characters that are safe to  use in a filename
 
