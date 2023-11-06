@@ -1,4 +1,12 @@
-import { Plugin, PluginSettingTab, Setting, Notice, TFile } from "obsidian";
+import {
+	Plugin,
+	PluginSettingTab,
+	Setting,
+	Notice,
+	TFile,
+	TFolder,
+	TAbstractFile,
+} from "obsidian";
 
 interface PluginSettings {
 	charCount: number;
@@ -69,16 +77,16 @@ export default class AutoFilename extends Plugin {
 				fileName += char;
 			}
 		}
+
+		fileName = fileName.trim(); // Trim white space
 		if (fileName[0] == ".") fileName = "~ " + fileName; // Add "~ " at the beginning if "." is the first character in a file to avoid naming issues.
 
 		// No need to rename if new filename == old filename
-		if (fileName == file.name.slice(0, -24)) return;
+		if (fileName == file.name.slice(0, -13)) return;
 
 		// Adds 7 random alphanumeric characters at the end.
 		// This allows multiple files with the same first n characters to be created without issues.
-		fileName = `${fileName.trim()} (${Math.random()
-			.toString(36)
-			.slice(-7)}).md`;
+		fileName = `${fileName} (${Math.random().toString(36).slice(-7)}).md`;
 
 		const newPath: string = `${this.settings.targetFolder}/${fileName}`;
 		await this.app.fileManager.renameFile(file, newPath);
@@ -248,16 +256,25 @@ class AutoFilenameSettings extends PluginSettingTab {
 			)
 			.addButton((button) =>
 				button.setButtonText("Rename").onClick(async () => {
-					let files = this.app.vault.getMarkdownFiles();
+					let targetFolder = this.app.vault.getAbstractFileByPath(
+						this.plugin.settings.targetFolder
+					);
+					let files: TAbstractFile[];
+					if (targetFolder instanceof TFolder) {
+						files = targetFolder.children;
+					} else {
+						new Notice("Error renaming files!");
+						return;
+					}
 					new Notice(
 						`Renaming ${files.length} files in ${this.plugin.settings.targetFolder}...`
 					);
 					renamedFileCount = 0;
 					await Promise.all(
-						files.map((file) => this.plugin.renameFile(file, true))
+						files.map((file: TFile) => this.plugin.renameFile(file, true))
 					);
 					new Notice(
-						`Successfully renamed ${renamedFileCount}/${files.length} files.`
+						`Renamed ${renamedFileCount}/${files.length} files in ${this.plugin.settings.targetFolder}.`
 					);
 				})
 			);
