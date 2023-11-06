@@ -1,7 +1,7 @@
 {
 	"id": "auto-filename",
 	"name": "Auto Filename",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"minAppVersion": "0.15.0",
 	"description": "Automatically rename files on the go based on the first x characters of files.",
 	"author": "rcsaquino",

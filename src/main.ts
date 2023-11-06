@@ -30,6 +30,7 @@ export default class AutoFilename extends Plugin {
 		// Debounce to avoid performance issues
 		if (!noDelay) {
 			if (onTimeout) {
+				// Clear timeout only if renameFile is called on the same file.
 				if (previousFile == file.path) {
 					clearTimeout(timeout);
 				}
@@ -118,7 +119,9 @@ export default class AutoFilename extends Plugin {
 					this.settings.isTitleHidden &&
 					file?.parent?.path == this.settings.targetFolder;
 
-				let target = document.querySelector(".inline-title");
+				const target = document
+					.querySelector(".workspace-leaf.mod-active")
+					?.querySelector(".inline-title");
 				if (!target) return;
 				const customCss = "hide-inline-title";
 				if (shouldHide && !target.classList.contains(customCss)) {
