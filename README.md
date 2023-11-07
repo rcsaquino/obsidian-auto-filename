@@ -12,6 +12,9 @@
 
 😊 Try Obsidian Auto Filename today and save yourself time and effort!
 
+## Demo
+![](https://github.com/rcsaquino/obsidian-auto-filename/blob/main/assets/demo.gif)
+
 ## How to use
 
 1. Install from obsidian community plugins.
