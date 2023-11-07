@@ -261,26 +261,26 @@ class AutoFilenameSettings extends PluginSettingTab {
 					);
 					let files: TAbstractFile[];
 					if (targetFolder instanceof TFolder) {
-						files = targetFolder.children;
+						files = targetFolder.children.filter(
+							(file: TAbstractFile) => file instanceof TFile
+						);
 					} else {
 						new Notice("Error renaming files!");
 						return;
 					}
+
 					new Notice(
 						`Renaming files in ${this.plugin.settings.targetFolder}...`
 					);
-					let totalFileCount = 0;
+
 					renamedFileCount = 0;
 					await Promise.all(
-						files.map((file: TAbstractFile) => {
-							if (file instanceof TFile) {
-								totalFileCount++;
-								this.plugin.renameFile(file, true);
-							}
-						})
+						files.map((file: TFile) =>
+							this.plugin.renameFile(file, true)
+						)
 					);
 					new Notice(
-						`Renamed ${renamedFileCount}/${totalFileCount} files in ${this.plugin.settings.targetFolder}.`
+						`Renamed ${renamedFileCount}/${files.length} files in ${this.plugin.settings.targetFolder}.`
 					);
 				})
 			);
