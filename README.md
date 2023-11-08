@@ -34,8 +34,12 @@
     - Hide inline title for target folder
         - Toggle
         - This overrides "Appearance > Advanced > Show inline title" for files on the target folder.
-    - You must enable "Show inline title" in options to use this setting.
+    	- You must enable "Show inline title" in options to use this setting.
         - Default: off
+	- Check interval
+		- Field: accepts number
+		- Interval in milliseconds of how often to rename files while editing. Increase if there's performance issues.
+		- Default: 500
     - Rename All files
         - Button
         - Renames all files on the target folder.
