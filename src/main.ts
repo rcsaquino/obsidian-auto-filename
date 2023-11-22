@@ -13,7 +13,9 @@ interface PluginSettings {
 	targetFolder: string;
 	isTitleHidden: boolean;
 	checkInterval: number;
-	ignoreYAML: boolean;
+	supportYAML: boolean;
+	useHeader: boolean;
+	includeSubfolder: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -21,10 +23,10 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	targetFolder: "",
 	isTitleHidden: false,
 	checkInterval: 500,
-	ignoreYAML: false,
+	supportYAML: true,
+	useHeader: true,
+	includeSubfolder: false,
 };
-
-const END_OF_LINE: RegExp = /\r\n|\r|\n/;
 
 // Global variable for "Rename all files" setting
 let renamedFileCount: number = 0;
@@ -34,13 +36,22 @@ let onTimeout: boolean = true;
 let timeout: NodeJS.Timeout;
 let previousFile: string;
 
+function inTargetFolder(file: TFile, settings: PluginSettings): boolean {
+	if (settings.targetFolder == "") return false; // False if user has no target folder selected
+	if (settings.includeSubfolder) {
+		if (!file.parent?.path.startsWith(settings.targetFolder)) return false; // False if file is not in user's target folder or its subfolders
+	} else {
+		if (file.parent?.path != settings.targetFolder) return false; // False if file is not in user's target folder
+	}
+	return true;
+}
+
 export default class AutoFilename extends Plugin {
 	settings: PluginSettings;
 
 	// Function for renaming files
 	async renameFile(file: TFile, noDelay = false): Promise<void> {
-		if (this.settings.targetFolder == "") return; // Return if user has no target folder selected
-		if (file?.parent?.path != this.settings.targetFolder) return; // Return if file is not in user's target folder
+		if (!inTargetFolder(file, this.settings)) return; // Return if file is not within the target folder/s
 
 		// Debounce to avoid performance issues
 		if (!noDelay) {
@@ -65,17 +76,16 @@ export default class AutoFilename extends Plugin {
 
 		let content: string = await this.app.vault.cachedRead(file);
 
-		// Ignores YAML depending on user preference (Experimental)
-		if (this.settings.ignoreYAML) {
-			let contentLines: string[] = content.split(END_OF_LINE);
-			if (contentLines[0] === "---") {
-				for (let i: number = 1; i < contentLines.length; i++) {
-					if (contentLines[i] === "---") {
-						content = contentLines.slice(i + 1).join(" ");
-						break;
-					}
-				}
-			}
+		// Ignores YAML depending on user preference
+		if (this.settings.supportYAML && content.startsWith("---")) {
+			let index = content.indexOf("---", 3); // returns -1 if none
+			if (index != -1) content = content.slice(index + 3).trimStart(); // Add 3 to cover "---" || Cleanup white spaces and newlines at start
+		}
+
+		// Use the header as filename depending on user preference
+		if (this.settings.useHeader && content.startsWith("# ")) {
+			let index = content.indexOf("\n");
+			if (index != -1) content = content.slice(2, index);
 		}
 
 		const allowedChars: string =
@@ -90,23 +100,22 @@ export default class AutoFilename extends Plugin {
 				break;
 			}
 			let char = content[i];
-			if (END_OF_LINE.test(char)) char = " "; // Treat new lines as spaces.
-			if (allowedChars.contains(char)) {
-				fileName += char;
-			}
+			if (char === "\n") char = " "; // Treat new lines as spaces.
+			if (allowedChars.includes(char)) fileName += char;
 		}
 
 		fileName = fileName.trim(); // Trim white space
-		if (fileName[0] == ".") fileName = "~ " + fileName; // Add "~ " at the beginning if "." is the first character in a file to avoid naming issues.
+		if (fileName[0] == ".") fileName = fileName.slice(1); // Remove if "." is the first character in a file to avoid naming issues.
 
 		// No need to rename if new filename == old filename
-		if (fileName == file.name.slice(0, -13)) return;
+		// " (abc1234).md" = 13 chars
+		if (file.name.startsWith(fileName) && fileName != "") return;
 
 		// Adds 7 random alphanumeric characters at the end.
 		// This allows multiple files with the same first n characters to be created without issues.
 		fileName = `${fileName} (${Math.random().toString(36).slice(-7)}).md`;
 
-		const newPath: string = `${this.settings.targetFolder}/${fileName}`;
+		const newPath: string = `${file.parent?.path}/${fileName}`;
 		await this.app.fileManager.renameFile(file, newPath);
 		renamedFileCount++;
 	}
@@ -141,12 +150,13 @@ export default class AutoFilename extends Plugin {
 		// Used for "Hide inline title for target folder" setting.
 		this.registerEvent(
 			this.app.workspace.on("file-open", (file) => {
+				if (!file) return;
 				if (!document.body.classList.contains("show-inline-title"))
 					return;
 
 				let shouldHide =
 					this.settings.isTitleHidden &&
-					file?.parent?.path == this.settings.targetFolder;
+					inTargetFolder(file, this.settings);
 
 				const target = document
 					.querySelector(".workspace-leaf.mod-active")
@@ -178,7 +188,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 			)
 			.addText((text) =>
 				text
-					.setPlaceholder("folder/subfolder")
+					.setPlaceholder("folder/path/here")
 					.setValue(this.plugin.settings.targetFolder)
 					.onChange(async (value) => {
 						this.plugin.settings.targetFolder = value;
@@ -187,6 +197,19 @@ class AutoFilenameSettings extends PluginSettingTab {
 			);
 
 		// Setting 2
+		new Setting(this.containerEl)
+			.setName("Include subfolder")
+			.setDesc("Also target files in subfolders of target folder.")
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.includeSubfolder)
+					.onChange(async (value) => {
+						this.plugin.settings.includeSubfolder = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// Setting 3
 		new Setting(this.containerEl)
 			.setName("Character count")
 			.setDesc(
@@ -207,7 +230,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 					})
 			);
 
-		// Setting 3
+		// Setting 4
 		const shouldDisable: boolean =
 			!document.body.classList.contains("show-inline-title");
 		const description: string = shouldDisable
@@ -246,7 +269,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 				}
 			});
 
-		// Setting 4
+		// Setting 5
 		new Setting(this.containerEl)
 			.setName("Check interval")
 			.setDesc(
@@ -266,22 +289,35 @@ class AutoFilenameSettings extends PluginSettingTab {
 					})
 			);
 
-		// Setting 5
+		// Setting 6
 		new Setting(this.containerEl)
-			.setName("YAML Support (Experimental)")
+			.setName("Use the header as filename")
 			.setDesc(
-				"Enables YAML support. Warning: Highly experimental. Please report bugs/performance issues in the github page."
+				"Uses the header as filename if the file starts with an H1."
 			)
 			.addToggle((toggle) => {
 				toggle
-					.setValue(this.plugin.settings.ignoreYAML)
+					.setValue(this.plugin.settings.useHeader)
 					.onChange(async (value) => {
-						this.plugin.settings.ignoreYAML = value;
+						this.plugin.settings.useHeader = value;
 						await this.plugin.saveSettings();
 					});
 			});
 
-		// Setting 6
+		// Setting 7
+		new Setting(this.containerEl)
+			.setName("YAML support")
+			.setDesc("Enables YAML support.")
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.supportYAML)
+					.onChange(async (value) => {
+						this.plugin.settings.supportYAML = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// Setting 8
 		new Setting(this.containerEl)
 			.setName("Rename all files")
 			.setDesc(
@@ -289,18 +325,12 @@ class AutoFilenameSettings extends PluginSettingTab {
 			)
 			.addButton((button) =>
 				button.setButtonText("Rename").onClick(async () => {
-					let targetFolder = this.app.vault.getAbstractFileByPath(
-						this.plugin.settings.targetFolder
-					);
-					let files: TAbstractFile[];
-					if (targetFolder instanceof TFolder) {
-						files = targetFolder.children.filter(
-							(file: TAbstractFile) => file instanceof TFile
-						);
-					} else {
-						new Notice("Error renaming files!");
-						return;
-					}
+					let filesToRename: TFile[] = [];
+					this.app.vault.getMarkdownFiles().forEach((file) => {
+						if (inTargetFolder(file, this.plugin.settings)) {
+							filesToRename.push(file);
+						}
+					});
 
 					new Notice(
 						`Renaming files in ${this.plugin.settings.targetFolder}...`
@@ -308,12 +338,12 @@ class AutoFilenameSettings extends PluginSettingTab {
 
 					renamedFileCount = 0;
 					await Promise.all(
-						files.map((file: TFile) =>
+						filesToRename.map((file: TFile) =>
 							this.plugin.renameFile(file, true)
 						)
 					);
 					new Notice(
-						`Renamed ${renamedFileCount}/${files.length} files in ${this.plugin.settings.targetFolder}.`
+						`Renamed ${renamedFileCount}/${filesToRename.length} files in ${this.plugin.settings.targetFolder}.`
 					);
 				})
 			);
