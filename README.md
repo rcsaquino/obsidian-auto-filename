@@ -27,6 +27,10 @@
             - My Notes/Quick Notes
             - Fleeting Notes
             - /
+    - Include subfolder
+        - Toggle
+        - Also target files in subfolders of target folder.
+        - Default: off
     - Character count
         - Field: accepts number from 10 to 100.
         - Auto Filename will use the first x number of characters in file as filename.
@@ -40,6 +44,14 @@
 		- Field: accepts number
 		- Interval in milliseconds of how often to rename files while editing. Increase if there's performance issues.
 		- Default: 500
+    - Use header as filename
+        - Toggle
+        - Uses the header as filename if the file starts with an H1.
+        - Default: on
+    - YAML Support
+        - Toggle
+        - Enables YAML support.
+        - Default: on
     - Rename All files
         - Button
         - Renames all files on the target folder.
