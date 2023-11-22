@@ -13,6 +13,7 @@ interface PluginSettings {
 	targetFolder: string;
 	isTitleHidden: boolean;
 	checkInterval: number;
+	ignoreYAML: boolean;
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
@@ -20,7 +21,10 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	targetFolder: "",
 	isTitleHidden: false,
 	checkInterval: 500,
+	ignoreYAML: false,
 };
+
+const END_OF_LINE: RegExp = /\r\n|\r|\n/;
 
 // Global variable for "Rename all files" setting
 let renamedFileCount: number = 0;
@@ -59,11 +63,25 @@ export default class AutoFilename extends Plugin {
 			onTimeout = true;
 		}
 
-		const content = await this.app.vault.cachedRead(file);
-		const allowedChars: string =
-			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !#$%&'()+,-.;=@[]^_`{}~"; // Characters that are safe to  use in a filename
+		let content: string = await this.app.vault.cachedRead(file);
 
+		// Ignores YAML depending on user preference (Experimental)
+		if (this.settings.ignoreYAML) {
+			let contentLines: string[] = content.split(END_OF_LINE);
+			if (contentLines[0] === "---") {
+				for (let i: number = 1; i < contentLines.length; i++) {
+					if (contentLines[i] === "---") {
+						content = contentLines.slice(i + 1).join(" ");
+						break;
+					}
+				}
+			}
+		}
+
+		const allowedChars: string =
+			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !#$%&'()+,-.;=@[]^_`{}~"; // Characters that are safe to use in a filename
 		let fileName: string = "";
+
 		// Takes the first n characters of the file and uses it as part of the filename.
 		for (let i: number = 0; i < content.length; i++) {
 			// Adds "..." after the last character if file characters > n
@@ -72,7 +90,7 @@ export default class AutoFilename extends Plugin {
 				break;
 			}
 			let char = content[i];
-			if (char == "\n") char = " "; // Treat new lines as spaces.
+			if (END_OF_LINE.test(char)) char = " "; // Treat new lines as spaces.
 			if (allowedChars.contains(char)) {
 				fileName += char;
 			}
@@ -249,6 +267,21 @@ class AutoFilenameSettings extends PluginSettingTab {
 			);
 
 		// Setting 5
+		new Setting(this.containerEl)
+			.setName("YAML Support (Experimental)")
+			.setDesc(
+				"Enables YAML support. Warning: Highly experimental. Please report bugs/performance issues in the github page."
+			)
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.ignoreYAML)
+					.onChange(async (value) => {
+						this.plugin.settings.ignoreYAML = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// Setting 6
 		new Setting(this.containerEl)
 			.setName("Rename all files")
 			.setDesc(
