@@ -1,12 +1,4 @@
-import {
-	Plugin,
-	PluginSettingTab,
-	Setting,
-	Notice,
-	TFile,
-	TFolder,
-	TAbstractFile,
-} from "obsidian";
+import { Plugin, PluginSettingTab, Setting, Notice, TFile } from "obsidian";
 
 interface PluginSettings {
 	charCount: number;
