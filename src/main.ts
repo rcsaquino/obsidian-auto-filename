@@ -76,7 +76,7 @@ export default class AutoFilename extends Plugin {
 
 		let content: string = await this.app.vault.cachedRead(file);
 
-		// Ignores YAML depending on user preference
+		// Supports YAML depending on user preference
 		if (this.settings.supportYAML && content.startsWith("---")) {
 			let index = content.indexOf("---", 3); // returns -1 if none
 			if (index != -1) content = content.slice(index + 3).trimStart(); // Add 3 to cover "---" || Cleanup white spaces and newlines at start
