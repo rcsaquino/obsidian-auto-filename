@@ -34,16 +34,20 @@
     - Hide inline title for target folder
         - Toggle
         - This overrides "Appearance > Advanced > Show inline title" for files on the target folder.
-    - You must enable "Show inline title" in options to use this setting.
+    	- You must enable "Show inline title" in options to use this setting.
         - Default: off
+	- Check interval
+		- Field: accepts number
+		- Interval in milliseconds of how often to rename files while editing. Increase if there's performance issues.
+		- Default: 500
     - Rename All files
         - Button
         - Renames all files on the target folder.
         - Warning: To be safe, make sure you backup before proceeding.
 
 ## Manual install
-1. Download `main.js` and `manifest.json` from the [latest release](https://github.com/rcsaquino/obsidian-auto-filename/releases/).
-2. Copy or move `main.js` and `manifest.js` to `your_vault_name/.obsidian/plugins/obsidian-auto-filename`.
+1. Download `main.js`, `styles.css` and `manifest.json` from the [latest release](https://github.com/rcsaquino/obsidian-auto-filename/releases/).
+2. Copy or move the downloaded files to `path_to_your_vault/.obsidian/plugins/obsidian-auto-filename`.
 
 ## Support my work
 
