@@ -84,6 +84,7 @@ export default class AutoFilename extends Plugin {
 				"# ",
 				"## ",
 				"### ",
+				"#### ",
 				"##### ",
 				"###### ",
 			];
