@@ -98,7 +98,9 @@ export default class AutoFilename extends Plugin {
 		}
 
 		const illegalChars: string = '\\/:*?"<>|#^[]'; // Characters that should be avoided in filenames
-		const illegalNames: string[] = ["NUL"]; // Special filenames that are illegal in some OSs 
+		const illegalNames: string[] = ["CON", "PRN", "AUX", "NUL",
+			"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM0",
+			"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT0"]; // Special filenames that are illegal in some OSs
 		let newFileName: string = "";
 
 		// Takes the first n characters of the file and uses it as part of the filename.
