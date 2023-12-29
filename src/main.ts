@@ -97,8 +97,10 @@ export default class AutoFilename extends Plugin {
 			}
 		}
 
-		const allowedChars: string =
-			"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 !#$%&'()+,-.;=@[]^_`{}~"; // Characters that are safe to use in a filename
+		const illegalChars: string = '\\/:*?"<>|#^[]'; // Characters that should be avoided in filenames
+		const illegalNames: string[] = ["CON", "PRN", "AUX", "NUL",
+			"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM0",
+			"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT0"]; // Special filenames that are illegal in some OSs
 		let newFileName: string = "";
 
 		// Takes the first n characters of the file and uses it as part of the filename.
@@ -118,20 +120,21 @@ export default class AutoFilename extends Plugin {
 					newFileName += "..."; // Adds "..." at the end to indicate there might be more text.
 					break;
 				}
-
-				char = " "; // Treat new lines as spaces.
 			}
 
-			if (allowedChars.includes(char)) newFileName += char;
+			// Avoid illegal characters in filenames
+			if (!(illegalChars.includes(char))) newFileName += char;
 		}
 
-		newFileName = newFileName.trim(); // Trim white space
+		newFileName = newFileName.trim() // Trim white spaces
+			.replace(/\s+/g, " "); // Replace consecutive whitespace characters with a space
 
 		// Remove all leading "." to avoid naming issues.
 		while (newFileName[0] == ".") {
 			newFileName = newFileName.slice(1);
 		}
-		if (newFileName == "") newFileName = "Untitled"; // Change to Untitled if newFileName outputs to nothing.
+		if (newFileName == "" || illegalNames.includes(newFileName.toUpperCase()))
+			newFileName = "Untitled"; // Change to Untitled if newFileName outputs to nothing, or if it matches any of the illegal names.
 
 		let newPath: string = `${file.parent?.path}/${newFileName}.md`;
 
