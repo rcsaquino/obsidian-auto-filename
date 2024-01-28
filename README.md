@@ -19,18 +19,14 @@
 
 1. Install from obsidian community plugins.
 2. Setup settings
-    - Target folder
-        - Field: accepts folder path from vault.
-        - Target folder path where the Auto Filename would auto rename files.
+    - Include
+        - Field: accepts folder paths from vault.
+        - Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive.
         - Default: none
         - Examples:
-            - My Notes/Quick Notes
-            - Fleeting Notes
+            - My Folder
+            - Folder/Sub Folder
             - /
-    - Include subfolder
-        - Toggle
-        - Also target files in subfolders of target folder.
-        - Default: off
     - Use header as filename
         - Toggle
         - Uses the header as filename if the file starts with an H1.

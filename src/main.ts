@@ -1,8 +1,7 @@
 import { Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
 
 interface PluginSettings {
-	targetFolder: string;
-	includeSubfolder: boolean;
+	includeFolders: string[];
 	useHeader: boolean;
 	useFirstLine: boolean;
 	isTitleHidden: boolean;
@@ -12,8 +11,7 @@ interface PluginSettings {
 }
 
 const DEFAULT_SETTINGS: PluginSettings = {
-	targetFolder: "",
-	includeSubfolder: false,
+	includeFolders: [],
 	useHeader: true,
 	useFirstLine: false,
 	isTitleHidden: true,
@@ -32,18 +30,11 @@ let timeout: NodeJS.Timeout;
 let previousFile: string;
 
 function inTargetFolder(file: TFile, settings: PluginSettings): boolean {
-	if (settings.targetFolder === "") return false; // False if user has no target folder selected
+	if (settings.includeFolders.length === 0) return false; // False if user has no target folder selected
 
-	if (settings.includeSubfolder) {
-		// Eveything is within root so return true
-		if (settings.targetFolder === "/") return true;
-
-		// True if file is in user's target folder or its subfolders
-		if (file.parent?.path.split("/")[0] === settings.targetFolder)
-			return true;
-
-		// True only if file is in user's target folder excluding subfolders
-	} else if (file.parent?.path === settings.targetFolder) return true;
+	// True if folder is included
+	if (settings.includeFolders.includes(file.parent?.path as string))
+		return true;
 
 	return false; // False if all checks fails
 }
@@ -259,34 +250,22 @@ class AutoFilenameSettings extends PluginSettingTab {
 
 		// Setting 1
 		new Setting(this.containerEl)
-			.setName("Target folder")
+			.setName("Include")
 			.setDesc(
-				"Target folder path where the Auto Filename would auto rename files."
+				"Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive."
 			)
-			.addText((text) =>
-				text
-					.setPlaceholder("folder/path/here")
-					.setValue(this.plugin.settings.targetFolder)
+			.addTextArea((text) => {
+				text.setPlaceholder("/\nfolder\nfolder/subfolder")
+					.setValue(this.plugin.settings.includeFolders.join("\n"))
 					.onChange(async (value) => {
-						this.plugin.settings.targetFolder = value;
-						await this.plugin.saveSettings();
-					})
-			);
-
-		// Setting 2
-		new Setting(this.containerEl)
-			.setName("Include subfolder")
-			.setDesc("Also target files in subfolders of target folder.")
-			.addToggle((toggle) => {
-				toggle
-					.setValue(this.plugin.settings.includeSubfolder)
-					.onChange(async (value) => {
-						this.plugin.settings.includeSubfolder = value;
+						this.plugin.settings.includeFolders = value.split("\n");
 						await this.plugin.saveSettings();
 					});
+				text.inputEl.cols = 28;
+				text.inputEl.rows = 4;
 			});
 
-		// Setting 3
+		// Setting 2
 		new Setting(this.containerEl)
 			.setName("Use the header as filename")
 			.setDesc(
@@ -301,7 +280,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 					});
 			});
 
-		// Setting 4
+		// Setting 3
 		new Setting(this.containerEl)
 			.setName("Only use the first line")
 			.setDesc(
@@ -316,7 +295,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 					});
 			});
 
-		// Setting 5
+		// Setting 4
 		const shouldDisable: boolean =
 			!document.body.classList.contains("show-inline-title");
 		const description: string = shouldDisable
@@ -355,7 +334,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 				}
 			});
 
-		// Setting 6
+		// Setting 5
 		new Setting(this.containerEl)
 			.setName("YAML support")
 			.setDesc("Enables YAML support.")
@@ -368,7 +347,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 					});
 			});
 
-		// Setting 7
+		// Setting 6
 		new Setting(this.containerEl)
 			.setName("Character count")
 			.setDesc(
@@ -389,7 +368,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 					})
 			);
 
-		// Setting 8
+		// Setting 7
 		new Setting(this.containerEl)
 			.setName("Check interval")
 			.setDesc(
@@ -409,7 +388,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 					})
 			);
 
-		// Setting 9
+		// Setting 8
 		new Setting(this.containerEl)
 			.setName("Rename all files")
 			.setDesc(
@@ -424,9 +403,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 						}
 					});
 
-					new Notice(
-						`Renaming files in ${this.plugin.settings.targetFolder}...`
-					);
+					new Notice(`Renaming files, please wait...`);
 
 					renamedFileCount = 0;
 					tempNewPaths = [];
@@ -436,7 +413,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 						)
 					);
 					new Notice(
-						`Renamed ${renamedFileCount}/${filesToRename.length} files in ${this.plugin.settings.targetFolder}.`
+						`Renamed ${renamedFileCount}/${filesToRename.length} files.`
 					);
 				})
 			);
