@@ -41,7 +41,7 @@
        	- Default: off
     - Hide inline title for target folder
         - Toggle
-        - This overrides "Appearance > Advanced > Show inline title" for files on the target folder.
+        - This overrides "Appearance > Interface > Show inline title" for files on the target folder.
     	- You must enable "Show inline title" in options to use this setting.
         - Default: off
     - YAML Support

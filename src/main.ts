@@ -1,4 +1,4 @@
-import { Plugin, PluginSettingTab, Setting, Notice, TFile } from "obsidian";
+import { Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
 
 interface PluginSettings {
 	targetFolder: string;
@@ -32,14 +32,20 @@ let timeout: NodeJS.Timeout;
 let previousFile: string;
 
 function inTargetFolder(file: TFile, settings: PluginSettings): boolean {
-	if (settings.targetFolder == "") return false; // False if user has no target folder selected
+	if (settings.targetFolder === "") return false; // False if user has no target folder selected
+
 	if (settings.includeSubfolder) {
-		if (file.parent?.path.split("/")[0] != settings.targetFolder)
-			return false; // False if file is not in user's target folder or its subfolders
-	} else {
-		if (file.parent?.path != settings.targetFolder) return false; // False if file is not in user's target folder
-	}
-	return true;
+		// Eveything is within root so return true
+		if (settings.targetFolder === "/") return true;
+
+		// True if file is in user's target folder or its subfolders
+		if (file.parent?.path.split("/")[0] === settings.targetFolder)
+			return true;
+
+		// True only if file is in user's target folder excluding subfolders
+	} else if (file.parent?.path === settings.targetFolder) return true;
+
+	return false; // False if all checks fails
 }
 
 export default class AutoFilename extends Plugin {
@@ -49,8 +55,8 @@ export default class AutoFilename extends Plugin {
 	async renameFile(file: TFile, noDelay = false): Promise<void> {
 		if (!inTargetFolder(file, this.settings)) return; // Return if file is not within the target folder/s
 
-		// Debounce to avoid performance issues if noDelay is disabled
-		if (!noDelay) {
+		// Debounce to avoid performance issues if noDelay is disabled or checkInterval is 0
+		if (noDelay === false) {
 			if (onTimeout) {
 				// Clear timeout only if renameFile is called on the same file.
 				if (previousFile == file.path) {
@@ -98,9 +104,32 @@ export default class AutoFilename extends Plugin {
 		}
 
 		const illegalChars: string = '\\/:*?"<>|#^[]'; // Characters that should be avoided in filenames
-		const illegalNames: string[] = ["CON", "PRN", "AUX", "NUL",
-			"COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "COM0",
-			"LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT0"]; // Special filenames that are illegal in some OSs
+		const illegalNames: string[] = [
+			"CON",
+			"PRN",
+			"AUX",
+			"NUL",
+			"COM1",
+			"COM2",
+			"COM3",
+			"COM4",
+			"COM5",
+			"COM6",
+			"COM7",
+			"COM8",
+			"COM9",
+			"COM0",
+			"LPT1",
+			"LPT2",
+			"LPT3",
+			"LPT4",
+			"LPT5",
+			"LPT6",
+			"LPT7",
+			"LPT8",
+			"LPT9",
+			"LPT0",
+		]; // Special filenames that are illegal in some OSs
 		let newFileName: string = "";
 
 		// Takes the first n characters of the file and uses it as part of the filename.
@@ -123,18 +152,23 @@ export default class AutoFilename extends Plugin {
 			}
 
 			// Avoid illegal characters in filenames
-			if (!(illegalChars.includes(char))) newFileName += char;
+			if (!illegalChars.includes(char)) newFileName += char;
 		}
 
-		newFileName = newFileName.trim() // Trim white spaces
+		newFileName = newFileName
+			.trim() // Trim white spaces
 			.replace(/\s+/g, " "); // Replace consecutive whitespace characters with a space
 
 		// Remove all leading "." to avoid naming issues.
 		while (newFileName[0] == ".") {
 			newFileName = newFileName.slice(1);
 		}
-		if (newFileName == "" || illegalNames.includes(newFileName.toUpperCase()))
-			newFileName = "Untitled"; // Change to Untitled if newFileName outputs to nothing, or if it matches any of the illegal names.
+
+		// Change to Untitled if newFileName outputs to nothing, or if it matches any of the illegal names.
+		const isIllegalName =
+			newFileName === "" ||
+			illegalNames.includes(newFileName.toUpperCase());
+		if (isIllegalName) newFileName = "Untitled";
 
 		let newPath: string = `${file.parent?.path}/${newFileName}.md`;
 
@@ -180,7 +214,8 @@ export default class AutoFilename extends Plugin {
 		this.registerEvent(
 			this.app.vault.on("modify", (abstractFile) => {
 				if (abstractFile instanceof TFile) {
-					this.renameFile(abstractFile);
+					const noDelay = this.settings.checkInterval === 0; // enable noDelay if checkInterval is 0
+					this.renameFile(abstractFile, noDelay);
 				}
 			})
 		);
@@ -282,8 +317,8 @@ class AutoFilenameSettings extends PluginSettingTab {
 		const shouldDisable: boolean =
 			!document.body.classList.contains("show-inline-title");
 		const description: string = shouldDisable
-			? 'Enable "Appearance > Advanced > Show inline title" in options to use this setting.'
-			: 'Override "Appearance > Advanced > Show inline title" for files on the target folder.';
+			? 'Enable "Appearance > Interface > Show inline title" in options to use this setting.'
+			: 'Override "Appearance > Interface > Show inline title" for files on the target folder.';
 		new Setting(this.containerEl)
 			.setName("Hide inline title for target folder")
 			.setDesc(description)
