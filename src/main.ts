@@ -170,7 +170,10 @@ export default class AutoFilename extends Plugin {
 			illegalNames.includes(newFileName.toUpperCase());
 		if (isIllegalName) newFileName = "Untitled";
 
-		let newPath: string = `${file.parent?.path}/${newFileName}.md`;
+		const parentPath =
+			file.parent?.path === "/" ? "" : file.parent?.path + "/";
+
+		let newPath: string = `${parentPath}${newFileName}.md`;
 
 		// Duplicate checker: If file exists or newPath is in tempNewPaths, enter loop.
 		let counter: number = 1;
@@ -179,7 +182,7 @@ export default class AutoFilename extends Plugin {
 		while (fileExists || tempNewPaths.includes(newPath)) {
 			if (file.path == newPath) return; // No need to rename if new filename == old filename
 			counter += 1;
-			newPath = `${file.parent?.path}/${newFileName} (${counter}).md`; // Adds (2), (3), (...) to avoid filename duplicates similar to windows.
+			newPath = `${parentPath}${newFileName} (${counter}).md`; // Adds (2), (3), (...) to avoid filename duplicates similar to windows.
 			fileExists = this.app.vault.getAbstractFileByPath(newPath) != null;
 		}
 
