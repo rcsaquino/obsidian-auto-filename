@@ -1,4 +1,5 @@
 import { Notice, Plugin, PluginSettingTab, Setting, TFile } from "obsidian";
+import { minimatch } from "minimatch"
 
 interface PluginSettings {
 	includeFolders: string[];
@@ -32,11 +33,10 @@ let previousFile: string;
 function inTargetFolder(file: TFile, settings: PluginSettings): boolean {
 	if (settings.includeFolders.length === 0) return false; // False if user has no target folder selected
 
-	// True if folder is included
-	if (settings.includeFolders.includes(file.parent?.path as string))
-		return true;
-
-	return false; // False if all checks fails
+	// True if the file matches the folder or the pattern
+	return settings.includeFolders.some(
+		(folder) => file.parent?.path === folder || minimatch(file.path, folder),
+	);
 }
 
 export default class AutoFilename extends Plugin {
@@ -252,7 +252,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Include")
 			.setDesc(
-				"Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive."
+				"Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive. Supports globs."
 			)
 			.addTextArea((text) => {
 				text.setPlaceholder("/\nfolder\nfolder/subfolder")

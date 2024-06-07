@@ -21,7 +21,7 @@
 2. Setup settings
     - Include
         - Field: accepts folder paths from vault.
-        - Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive.
+        - Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive. Supports [globs](https://github.com/isaacs/minimatch).
         - Default: none
         - Examples:
             - My Folder
