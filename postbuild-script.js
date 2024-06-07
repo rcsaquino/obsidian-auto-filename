@@ -1,5 +1,10 @@
 const fs = require("fs");
 
+fs.mkdir("./release", { recursive: true }, (err) => {
+	if (err) throw err;
+	console.log("created release folder!");
+});
+
 fs.copyFile("main.js", "./release/main.js", (err) => {
 	if (err) throw err;
 	console.log("main.js updated successfully!");
