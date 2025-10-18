@@ -44,6 +44,10 @@
         - Toggle
         - Enables YAML support.
         - Default: on
+    - Include Emojis
+        - Toggle
+        - Include or remove emojis in the filename.
+        - Default: on
     - Character count
         - Field: accepts number from 10 to 100.
         - Auto Filename will use the first x number of characters in file as filename.
