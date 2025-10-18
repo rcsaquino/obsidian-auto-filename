@@ -6,6 +6,7 @@ interface PluginSettings {
 	useFirstLine: boolean;
 	isTitleHidden: boolean;
 	supportYAML: boolean;
+	includeEmojis: boolean;
 	charCount: number;
 	checkInterval: number;
 }
@@ -16,6 +17,7 @@ const DEFAULT_SETTINGS: PluginSettings = {
 	useFirstLine: false,
 	isTitleHidden: true,
 	supportYAML: true,
+	includeEmojis: true,
 	charCount: 50,
 	checkInterval: 500,
 };
@@ -146,6 +148,13 @@ export default class AutoFilename extends Plugin {
 			if (!illegalChars.includes(char)) newFileName += char;
 		}
 
+		if (!this.settings.includeEmojis) {
+			newFileName = newFileName.replace(
+				/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g,
+				" ",
+			);
+		}
+
 		newFileName = newFileName
 			.trim() // Trim white spaces
 			.replace(/\s+/g, " "); // Replace consecutive whitespace characters with a space
@@ -195,7 +204,7 @@ export default class AutoFilename extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
+			await this.loadData(),
 		);
 	}
 
@@ -211,7 +220,7 @@ export default class AutoFilename extends Plugin {
 					const noDelay = this.settings.checkInterval === 0; // enable noDelay if checkInterval is 0
 					this.renameFile(abstractFile, noDelay);
 				}
-			})
+			}),
 		);
 
 		// Triggers when a file is opened.
@@ -237,7 +246,7 @@ export default class AutoFilename extends Plugin {
 				if (!shouldHide && target.classList.contains(customCss)) {
 					target.classList.remove(customCss);
 				}
-			})
+			}),
 		);
 	}
 }
@@ -252,7 +261,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Include")
 			.setDesc(
-				"Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive."
+				"Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive.",
 			)
 			.addTextArea((text) => {
 				text.setPlaceholder("/\nfolder\nfolder/subfolder")
@@ -269,7 +278,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Use the header as filename")
 			.setDesc(
-				"Use the header as filename if the file starts with a header"
+				"Use the header as filename if the file starts with a header",
 			)
 			.addToggle((toggle) => {
 				toggle
@@ -284,7 +293,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Only use the first line")
 			.setDesc(
-				"Ignore succeeding lines of text when determining filename."
+				"Ignore succeeding lines of text when determining filename.",
 			)
 			.addToggle((toggle) => {
 				toggle
@@ -318,18 +327,18 @@ class AutoFilenameSettings extends PluginSettingTab {
 				if (shouldDisable) {
 					setting.settingEl.style.opacity = "0.5";
 					setting.controlEl.getElementsByTagName(
-						"input"
+						"input",
 					)[0].disabled = true;
 					setting.controlEl.getElementsByTagName(
-						"input"
+						"input",
 					)[0].style.cursor = "not-allowed";
 				} else {
 					setting.settingEl.style.opacity = "1";
 					setting.controlEl.getElementsByTagName(
-						"input"
+						"input",
 					)[0].disabled = false;
 					setting.controlEl.getElementsByTagName(
-						"input"
+						"input",
 					)[0].style.cursor = "pointer";
 				}
 			});
@@ -349,14 +358,27 @@ class AutoFilenameSettings extends PluginSettingTab {
 
 		// Setting 6
 		new Setting(this.containerEl)
+			.setName("Include Emojis")
+			.setDesc("Include Emojis in the filename.")
+			.addToggle((toggle) => {
+				toggle
+					.setValue(this.plugin.settings.includeEmojis)
+					.onChange(async (value) => {
+						this.plugin.settings.includeEmojis = value;
+						await this.plugin.saveSettings();
+					});
+			});
+
+		// Setting 7
+		new Setting(this.containerEl)
 			.setName("Character count")
 			.setDesc(
-				"Auto Filename will use the first x number of characters in file as filename."
+				"Auto Filename will use the first x number of characters in file as filename.",
 			)
 			.addText((text) =>
 				text
 					.setPlaceholder(
-						`10-100 (Default: ${DEFAULT_SETTINGS.charCount})`
+						`10-100 (Default: ${DEFAULT_SETTINGS.charCount})`,
 					)
 					.setValue(String(this.plugin.settings.charCount))
 					.onChange(async (value) => {
@@ -365,19 +387,19 @@ class AutoFilenameSettings extends PluginSettingTab {
 							this.plugin.settings.charCount = numVal;
 							await this.plugin.saveSettings();
 						}
-					})
+					}),
 			);
 
-		// Setting 7
+		// Setting 8
 		new Setting(this.containerEl)
 			.setName("Check interval")
 			.setDesc(
-				"Interval in milliseconds of how often to rename files while editing. Increase if there's performance issues."
+				"Interval in milliseconds of how often to rename files while editing. Increase if there's performance issues.",
 			)
 			.addText((text) =>
 				text
 					.setPlaceholder(
-						`Default: ${DEFAULT_SETTINGS.checkInterval}`
+						`Default: ${DEFAULT_SETTINGS.checkInterval}`,
 					)
 					.setValue(String(this.plugin.settings.checkInterval))
 					.onChange(async (value) => {
@@ -385,14 +407,14 @@ class AutoFilenameSettings extends PluginSettingTab {
 							this.plugin.settings.checkInterval = Number(value);
 							await this.plugin.saveSettings();
 						}
-					})
+					}),
 			);
 
-		// Setting 8
+		// Setting 9
 		new Setting(this.containerEl)
 			.setName("Rename all files")
 			.setDesc(
-				"Force rename all files on the target folder. Warning: To be safe, make sure you backup before proceeding."
+				"Force rename all files on the target folder. Warning: To be safe, make sure you backup before proceeding.",
 			)
 			.addButton((button) =>
 				button.setButtonText("Rename").onClick(async () => {
@@ -409,13 +431,13 @@ class AutoFilenameSettings extends PluginSettingTab {
 					tempNewPaths = [];
 					await Promise.all(
 						filesToRename.map((file: TFile) =>
-							this.plugin.renameFile(file, true)
-						)
+							this.plugin.renameFile(file, true),
+						),
 					);
 					new Notice(
-						`Renamed ${renamedFileCount}/${filesToRename.length} files.`
+						`Renamed ${renamedFileCount}/${filesToRename.length} files.`,
 					);
-				})
+				}),
 			);
 	}
 }
