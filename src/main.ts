@@ -23,11 +23,11 @@ const DEFAULT_SETTINGS: PluginSettings = {
 };
 
 // Global variables for "Rename all files" setting
-let renamedFileCount: number = 0;
+let renamedFileCount = 0;
 let tempNewPaths: string[] = [];
 
 // Variables for debounce
-let onTimeout: boolean = true;
+let onTimeout = true;
 let timeout: NodeJS.Timeout;
 let previousFile: string;
 
@@ -73,7 +73,7 @@ export default class AutoFilename extends Plugin {
 
 		// Supports YAML depending on user preference
 		if (this.settings.supportYAML && content.startsWith("---")) {
-			let index = content.indexOf("---", 3); // returns -1 if none
+			const index = content.indexOf("---", 3); // returns -1 if none
 			if (index != -1) content = content.slice(index + 3).trimStart(); // Add 3 to cover "---" || Cleanup white spaces and newlines at start
 		}
 
@@ -89,14 +89,14 @@ export default class AutoFilename extends Plugin {
 			];
 			for (let i = 0; i < headerArr.length; i++) {
 				if (content.startsWith(headerArr[i])) {
-					let index = content.indexOf("\n");
+					const index = content.indexOf("\n");
 					if (index != -1) content = content.slice(i + 2, index);
 					break;
 				}
 			}
 		}
 
-		const illegalChars: string = '\\/:*?"<>|#^[]'; // Characters that should be avoided in filenames
+		const illegalChars = '\\/:*?"<>|#^[]'; // Characters that should be avoided in filenames
 		const illegalNames: string[] = [
 			"CON",
 			"PRN",
@@ -123,17 +123,17 @@ export default class AutoFilename extends Plugin {
 			"LPT9",
 			"LPT0",
 		]; // Special filenames that are illegal in some OSs
-		let newFileName: string = "";
+		let newFileName = "";
 
 		// Takes the first n characters of the file and uses it as part of the filename.
-		for (let i: number = 0; i < content.length; i++) {
+		for (let i = 0; i < content.length; i++) {
 			// Adds "..." after the last character if file characters > n
 			if (i >= Number(this.settings.charCount)) {
 				newFileName = newFileName.trimEnd();
 				newFileName += "...";
 				break;
 			}
-			let char = content[i];
+			const char = content[i];
 
 			if (char === "\n") {
 				// Ignore succeeding lines of text when determining filename depending on user preference.
@@ -148,10 +148,11 @@ export default class AutoFilename extends Plugin {
 			if (!illegalChars.includes(char)) newFileName += char;
 		}
 
+		// Remove emojis as set by user
 		if (!this.settings.includeEmojis) {
 			newFileName = newFileName.replace(
 				/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g,
-				" ",
+				"",
 			);
 		}
 
@@ -173,10 +174,10 @@ export default class AutoFilename extends Plugin {
 		const parentPath =
 			file.parent?.path === "/" ? "" : file.parent?.path + "/";
 
-		let newPath: string = `${parentPath}${newFileName}.md`;
+		let newPath = `${parentPath}${newFileName}.md`;
 
 		// Duplicate checker: If file exists or newPath is in tempNewPaths, enter loop.
-		let counter: number = 1;
+		let counter = 1;
 		let fileExists: boolean =
 			this.app.vault.getAbstractFileByPath(newPath) != null;
 		while (fileExists || tempNewPaths.includes(newPath)) {
@@ -231,7 +232,7 @@ export default class AutoFilename extends Plugin {
 				if (!document.body.classList.contains("show-inline-title"))
 					return;
 
-				let shouldHide =
+				const shouldHide =
 					this.settings.isTitleHidden &&
 					inTargetFolder(file, this.settings);
 
@@ -305,7 +306,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 			});
 
 		// Setting 4
-		const shouldDisable: boolean =
+		const shouldDisable =
 			!document.body.classList.contains("show-inline-title");
 		const description: string = shouldDisable
 			? 'Enable "Appearance > Interface > Show inline title" in options to use this setting.'
@@ -418,7 +419,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 			)
 			.addButton((button) =>
 				button.setButtonText("Rename").onClick(async () => {
-					let filesToRename: TFile[] = [];
+					const filesToRename: TFile[] = [];
 					this.app.vault.getMarkdownFiles().forEach((file) => {
 						if (inTargetFolder(file, this.plugin.settings)) {
 							filesToRename.push(file);
