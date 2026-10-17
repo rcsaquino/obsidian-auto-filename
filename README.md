@@ -22,11 +22,13 @@
     - Include
         - Field: accepts folder paths from vault.
         - Folder paths where Auto Filename would auto rename files. Separate by new line. Case sensitive.
+        - Supports glob patterns: `**` for all folders, `folder/**` for recursive matching.
         - Default: none
         - Examples:
-            - My Folder
-            - Folder/Sub Folder
-            - /
+            - `**` - all files in the entire vault
+            - `My Folder` - only files directly in "My Folder"
+            - `Notes/**` - files in "Notes" and all its subfolders (recursive)
+            - `/` - files in vault root only
     - Use header as filename
         - Toggle
         - Uses the header as filename if the file starts with an H1.
@@ -56,6 +58,12 @@
 		- Field: accepts number
 		- Interval in milliseconds of how often to rename files while editing. Increase if there's performance issues.
 		- Default: 500
+    - Illegal character replacement
+        - Field: accepts text.
+        - Character(s) to replace illegal filename characters (`\ / : * ? " < > | # ^ [ ]`) with. Default is a space, so `3/7/9` becomes `3 7 9`. Leave empty to delete them (old behavior).
+        - Default: ` ` (space)
+    - Ignore individual files
+        - No input. Add `auto-filename-ignore: true` to a note's frontmatter (Properties) to prevent Auto Filename from renaming that file. Also accepts `auto-filename: ignore` in frontmatter. Applies to automatic renames and "Rename all files".
     - Rename All files
         - Button
         - Renames all files on the target folder.
