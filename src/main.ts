@@ -30,7 +30,7 @@ let tempNewPaths: string[] = [];
 
 // Variables for debounce
 let onTimeout = true;
-let timeout: NodeJS.Timeout;
+let timeout: number;
 let previousFile: string;
 
 function normalizeFolderEntry(entry: string): string {
@@ -191,14 +191,14 @@ export default class AutoFilename extends Plugin {
 			if (onTimeout) {
 				// Clear timeout only if renameFile is called on the same file.
 				if (previousFile == file.path) {
-					clearTimeout(timeout);
+					activeWindow.clearTimeout(timeout);
 				}
 
 				previousFile = file.path;
 
-				timeout = setTimeout(() => {
+				timeout = activeWindow.setTimeout(() => {
 					onTimeout = false;
-					this.renameFile(file);
+					void this.renameFile(file);
 				}, this.settings.checkInterval);
 
 				return;
@@ -387,7 +387,7 @@ export default class AutoFilename extends Plugin {
 			this.app.vault.on("modify", (abstractFile) => {
 				if (abstractFile instanceof TFile) {
 					const noDelay = this.settings.checkInterval === 0; // enable noDelay if checkInterval is 0
-					this.renameFile(abstractFile, noDelay);
+					void this.renameFile(abstractFile, noDelay);
 				}
 			}),
 		);
@@ -400,7 +400,7 @@ export default class AutoFilename extends Plugin {
 			this.app.vault.on("rename", (abstractFile) => {
 				if (abstractFile instanceof TFile) {
 					const noDelay = this.settings.checkInterval === 0;
-					this.renameFile(abstractFile, noDelay);
+					void this.renameFile(abstractFile, noDelay);
 				}
 			}),
 		);
@@ -411,7 +411,7 @@ export default class AutoFilename extends Plugin {
 			this.app.vault.on("create", (abstractFile) => {
 				if (abstractFile instanceof TFile) {
 					const noDelay = this.settings.checkInterval === 0;
-					this.renameFile(abstractFile, noDelay);
+					void this.renameFile(abstractFile, noDelay);
 				}
 			}),
 		);
@@ -421,14 +421,14 @@ export default class AutoFilename extends Plugin {
 		this.registerEvent(
 			this.app.workspace.on("file-open", (file) => {
 				if (!file) return;
-				if (!document.body.classList.contains("show-inline-title"))
+				if (!activeDocument.body.classList.contains("show-inline-title"))
 					return;
 
 				const shouldHide =
 					this.settings.isTitleHidden &&
 					inTargetFolder(file, this.settings);
 
-				const target = document
+				const target = activeDocument
 					.querySelector(".workspace-leaf.mod-active")
 					?.querySelector(".inline-title");
 				if (!target) return;
@@ -504,11 +504,11 @@ class AutoFilenameSettings extends PluginSettingTab {
 
 		// Setting 4
 		const shouldDisable =
-			!document.body.classList.contains("show-inline-title");
+			!activeDocument.body.classList.contains("show-inline-title");
 		const description: string = shouldDisable
 			? 'Enable "Appearance > Interface > Show inline title" in options to use this setting.'
 			: 'Override "Appearance > Interface > Show inline title" for files on the target folder.';
-		new Setting(this.containerEl)
+		const hideTitleSetting = new Setting(this.containerEl)
 			.setName("Hide inline title for target folder")
 			.setDesc(description)
 			.addToggle((toggle) => {
@@ -518,28 +518,22 @@ class AutoFilenameSettings extends PluginSettingTab {
 						this.plugin.settings.isTitleHidden = value;
 						await this.plugin.saveSettings();
 					});
-			})
-			//  Disable this setting if the obsidian setting "Show inline title" is disabled
-			.setDisabled(shouldDisable)
-			.then(async (setting) => {
-				if (shouldDisable) {
-					setting.settingEl.style.opacity = "0.5";
-					setting.controlEl.getElementsByTagName(
-						"input",
-					)[0].disabled = true;
-					setting.controlEl.getElementsByTagName(
-						"input",
-					)[0].style.cursor = "not-allowed";
-				} else {
-					setting.settingEl.style.opacity = "1";
-					setting.controlEl.getElementsByTagName(
-						"input",
-					)[0].disabled = false;
-					setting.controlEl.getElementsByTagName(
-						"input",
-					)[0].style.cursor = "pointer";
-				}
 			});
+		// Disable this setting if the obsidian setting "Show inline title" is disabled.
+		// NOTE: `Setting.setDisabled` requires Obsidian 1.2.3+, but minAppVersion
+		// is 0.15.0, so apply the disabled state manually with long-available
+		// APIs (`settingEl` / `controlEl`) instead.
+		hideTitleSetting.settingEl.toggleClass(
+			"auto-filename-disabled",
+			shouldDisable,
+		);
+		hideTitleSetting.settingEl.toggleClass(
+			"auto-filename-enabled",
+			!shouldDisable,
+		);
+		const hideTitleInput =
+			hideTitleSetting.controlEl.getElementsByTagName("input")[0];
+		if (hideTitleInput) hideTitleInput.disabled = shouldDisable;
 
 		// Setting 5
 		new Setting(this.containerEl)
@@ -612,7 +606,7 @@ class AutoFilenameSettings extends PluginSettingTab {
 		new Setting(this.containerEl)
 			.setName("Illegal character replacement")
 			.setDesc(
-				"Character(s) to replace illegal filename characters (\\ / : * ? \" < > | # ^ [ ]) with. Default is a space, so \"3/7/9\" becomes \"3 7 9\". Leave empty to delete them (old behavior).",
+				"Character(s) to replace illegal filename characters (\\ / : * ? \" < > | # ^ [ ]) with. Leave empty to delete them.",
 			)
 			.addText((text) =>
 				text

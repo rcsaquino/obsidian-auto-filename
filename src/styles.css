@@ -1,3 +1,17 @@
 .hide-inline-title {
 	display: none;
 }
+
+/* Dim disabled setting via classes instead of inline styles
+   for better theming and maintainability. */
+.auto-filename-disabled {
+	opacity: 0.5;
+}
+
+.auto-filename-disabled input {
+	cursor: not-allowed;
+}
+
+.auto-filename-enabled input {
+	cursor: pointer;
+}
